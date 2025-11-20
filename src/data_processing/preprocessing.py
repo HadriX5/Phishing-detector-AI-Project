@@ -1,6 +1,6 @@
 import pandas as pd
 
-def clean_data(raw_data: pd.DataFrame, y) -> pd.DataFrame:
+def clean_data(raw_data: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:
     """
     Neteja i prepara el conjunt de dades per a un processament posterior o per a l’entrenament d’un model.
 
