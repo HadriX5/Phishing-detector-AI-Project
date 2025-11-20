@@ -1,0 +1,4 @@
+ELS SCRIPTS S'UTILITZEN PER EXECUTAR LES DIFERENTS PARTS DEL CODI
+ACTUEN NO S'EXECUTA RES DEL SRC DIRECTAMENT, ESTÀ ORQUESTAT PELS SCRIPTS
+
+Cada script crida funcions del codi de src/, que mantè separada la lògica del projecte.

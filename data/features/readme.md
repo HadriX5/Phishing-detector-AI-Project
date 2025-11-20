@@ -1,0 +1,1 @@
+conté el csv després de reduir el nombre de paràmetres
