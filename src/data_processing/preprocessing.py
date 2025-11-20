@@ -17,6 +17,8 @@ def clean_data(raw_data: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:
 
 
     processed_data = raw_data.drop_duplicates().dropna()
+
+    # Normalize all caracters (`, ´, etc.)
     processed_data['label'] = y
     processed_data.to_csv('../data/processed/processed_dataset.csv', index=False)
 
