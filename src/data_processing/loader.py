@@ -15,7 +15,7 @@ def load_raw_data(id: int = 967) -> pd.DataFrame:
     """
 
     # Fetch the data from the repository
-    data = fetch_ucirepo(id)
+    data = fetch_ucirepo(id = id)
 
     # Complete the dataset for cleaning
     raw_data = pd.concat([data.data.features, data.data.targets], axis = 1)
