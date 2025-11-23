@@ -20,8 +20,8 @@ def clean_data(raw_data: pd.DataFrame) -> pd.DataFrame:
 
     # IsHTTPS mismatch with URL
     https_mismatch_indices = processed_data[
-        (raw_data['URL'].str.startswith('https') & (raw_data['IsHTTPS'] == 0)) |
-        (~raw_data['URL'].str.startswith('https') & (raw_data['IsHTTPS'] == 1))
+        (processed_data['URL'].str.startswith('https') & (processed_data['IsHTTPS'] == 0)) |
+        (~processed_data['URL'].str.startswith('https') & (processed_data['IsHTTPS'] == 1))
     ]
 
     processed_data = processed_data.drop(https_mismatch_indices.index)
@@ -71,12 +71,13 @@ def clean_data(raw_data: pd.DataFrame) -> pd.DataFrame:
             (processed_data[col] >= 0) & (processed_data[col] <= 1)
         ]
 
-    output_path = '../data/processed/processed_dataset.parquet'
+    output_path = 'data/processed/processed_dataset.parquet'
     processed_data.to_parquet(output_path, index = False)
 
     try:
         pd.read_parquet(output_path)
     except Exception as e:
         raise IOError("Error al desar el fitxer Parquet: " + str(e))
-
+    
+    print("Dades netejades desades a:", output_path)
     return 0
