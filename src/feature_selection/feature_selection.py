@@ -12,11 +12,13 @@ def feature_selection():
     i la importància per permutació. Desa les característiques més importants en un fitxer
     i mostra un gràfic de les importàncies.
     """
-    X = pd.read_csv('../data/processed/processed_dataset.csv')
+    df = pd.read_parquet('data/processed/processed_dataset.parquet')
 
     # Drop label as we don't need it to select features
-    y = X.drop(['label'], axis = 1)
-    features = X.columns
+    X = df.drop('label', axis = 1)
+    y = df['label']
+
+    feature_names = X.columns
 
     # -- TRAINING RANDOM_FOREST_CLASSIFIER --
 
@@ -24,14 +26,9 @@ def feature_selection():
     # Parameters:
     #     - test_size: Sample remaining in test
     #     - random_state: Usual int for repeatibility
-    #     - stratify: Assure balancing in both datasets:
-    #         (Meaning, if 10% OG dataset is class X, 
-    #         there will be 10% of class X in train, 
-    #         regardless of nº of samples in OG)
     X_train, X_test, y_train, y_test = train_test_split(X, y, 
                                                         test_size = 0.2, 
-                                                        random_state = 42, 
-                                                        stratify = y)
+                                                        random_state = 42)
 
     # Define forest
     rf = RandomForestClassifier(n_estimators = 500, 
@@ -45,32 +42,31 @@ def feature_selection():
     # Repeat the rf 20 times with X_test and y_test so we have an std to observe
     result = permutation_importance(rf, X_test, y_test,
                                 n_repeats = 20,
-                                random_state=42,
-                                    n_jobs=-1,
-                                    scoring='accuracy')
+                                random_state = 42,
+                                n_jobs = -1,
+                                scoring = 'accuracy')
 
     # -- RESULTS --
 
-    # Get the features indexes
+    # Get the sorted indexes by importance (from lower to higher)
     sorted_indexes = result.importances_mean.argsort()
 
-    # Get the top 20
-    features = features[sorted_indexes][-20:]
-    features_values = result.importances_mean[sorted_idx][-20:]
-    features_std = result.importances_std[sorted_idx][-20:]
+    # Aisle the top 20 for visualization
+    top_20_idx = sorted_indexes[-20:]
 
-    # Save the features
-    top_features_list = [feature_names[i] for i in sorted_idx[::-1][:15]]
-    np.save('../models/features.npy', features_list)
-
-    # 
-    fig, ax = plt.subplots(figsize=(12, 8))
-    ax.boxplot(
-        result.importances[sorted_indexes][-20:].T,
-        vert = False,
-        labels = features_names
-    )
-    ax.set_title("Permutation Importance (Test Set)")
-    ax.set_xlabel("Disminució de la precisió del model en permutar la variable")
+    # Create the graphic
+    fig, ax = plt.subplots(figsize = (12, 8 ))
+    ax.boxplot(result.importances[top_20_idx].T,
+               vert = False,
+               labels = feature_names[top_20_idx])
+    ax.set_title("Permutation Importances (test set)")
+    ax.set_xlabel("Decrease in accuracy score when feature is permuted")
     plt.tight_layout()
     plt.show()
+
+    # Save the top 15 features to a .npy
+    top_15_idx = sorted_indexes[-15:][::-1]
+    top_15_features = feature_names[top_15_idx]
+
+    print(f"Top 15 features selected: {top_15_features}")
+    np.save('../data/features/features.npy', top_15_features)
