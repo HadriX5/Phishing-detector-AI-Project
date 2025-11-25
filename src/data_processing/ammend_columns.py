@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def ammend_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -10,7 +11,7 @@ def ammend_columns(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
     pd.DataFrame: The DataFrame with ammended columns.
     """
-
+    df = df.copy()
     # --- BASIC LENGTHS ---
     df['URLLength'] = df['URL'].str.len()
     df['DomainLength'] = df['Domain'].str.len()
@@ -32,8 +33,11 @@ def ammend_columns(df: pd.DataFrame) -> pd.DataFrame:
                                                           df['NoOfDegitsInURL'])
 
     # --- RATIOS ---
-    df['LetterRatioInURL'] = df['NoOfLettersInURL'] / df['URLLength']
-    df['DegitRatioInURL'] = df['NoOfDegitsInURL'] / df['URLLength']
-    df['SpacialCharRatioInURL'] = df['NoOfOtherSpecialCharsInURL'] / df['URLLength']
+
+    safe_den = df['URLLength'].replace(0, np.nan)  # Evitar divisió per zero
+
+    df['LetterRatioInURL'] = df['NoOfLettersInURL'] / safe_den
+    df['DegitRatioInURL'] = df['NoOfDegitsInURL'] / safe_den
+    df['SpacialCharRatioInURL'] = df['NoOfOtherSpecialCharsInURL'] / safe_den
 
     return df

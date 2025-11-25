@@ -1,1 +1,1 @@
-from .feature_selection import feature_selection
+from .feature_selection import select_features, filter_correlated_features

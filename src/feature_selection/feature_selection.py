@@ -4,18 +4,20 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.inspection import permutation_importance
 import matplotlib.pyplot as plt
+import pyarrow.parquet as pq
 
-
-def feature_selection():
+def select_features(df: pd.DataFrame):
     """
     Realitza la selecció de característiques utilitzant un classificador Random Forest
     i la importància per permutació. Desa les característiques més importants en un fitxer
     i mostra un gràfic de les importàncies.
     """
-    df = pd.read_parquet('data/processed/processed_dataset.parquet')
 
-    # Drop label as we don't need it to select features
-    X = df.drop('label', axis = 1)
+    # Drop columns that are essentially cheats
+    blacklist = ['label', 'URLSimilarityIndex'] 
+    
+    feature_cols = [c for c in df.columns if c not in blacklist]
+    X = df[feature_cols]
     y = df['label']
 
     feature_names = X.columns
@@ -55,12 +57,23 @@ def feature_selection():
     top_20_idx = sorted_indexes[-20:]
 
     # Create the graphic
-    fig, ax = plt.subplots(figsize = (12, 8 ))
-    ax.boxplot(result.importances[top_20_idx].T,
+    top_20_names = X.columns[top_20_idx]
+    top_20_data = result.importances[top_20_idx]      # For Boxplot (all repeats)
+    top_20_means = result.importances_mean[top_20_idx] # For Bar Chart (average)
+    
+    fig, ax = plt.subplots(1, 2,figsize = (12, 8 ))
+    
+    ax[0].boxplot(top_20_data.T,
                vert = False,
-               labels = feature_names[top_20_idx])
-    ax.set_title("Permutation Importances (test set)")
-    ax.set_xlabel("Decrease in accuracy score when feature is permuted")
+               labels = top_20_names)
+    ax[0].set_title("Permutation Importances (test set)")
+    ax[0].set_xlabel("Decrease in accuracy score when feature is permuted")
+
+    ax[1].barh(top_20_names, 
+               top_20_means)
+    ax[1].set_title("Top 20 Features (Mean Importance)")
+    ax[1].set_xlabel("Mean Decrease in Accuracy")
+    
     plt.tight_layout()
     plt.show()
 
@@ -70,3 +83,35 @@ def feature_selection():
 
     print(f"Top 15 features selected: {top_15_features}")
     np.save('../data/features/features.npy', top_15_features)
+
+def filter_correlated_features():
+    # Pearson correlation to be implemented
+
+    # Create a df without no-numberic columns
+    df = pq.read_table('data/processed/processed_dataset.parquet').to_pandas()
+
+    # Generic numeric filter
+    numeric_df = df.select_dtypes(include = [np.number])
+
+    correlation__matrix = numeric_df.corr('pearson').abs()
+
+    # We set a threshold to drop correlated features
+    threshold = 0.9
+
+    # Since the correlation matrix is symmetric, we only need to check one triangle
+    upper_triangle = correlation__matrix.where(
+        np.triu(np.ones(correlation__matrix.shape), k = 1).astype(bool))
+
+    # We look for columns with some value higher than the threshold
+    to_drop = [column for column in upper_triangle.columns if 
+               any(upper_triangle[column] > threshold)]
+    
+    # Protect the label column from being dropped just in case it has 
+    # high correlation with some feature
+    if 'label' in to_drop:
+        to_drop.remove('label')
+
+    # Drop the correlated features
+    reduced_df = numeric_df.drop(columns = to_drop)
+    print(reduced_df)
+    return reduced_df

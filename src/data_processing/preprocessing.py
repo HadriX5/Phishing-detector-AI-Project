@@ -18,6 +18,7 @@ def clean_data(raw_data: pd.DataFrame) -> pd.DataFrame:
 
     processed_data = raw_data.drop_duplicates().dropna()
 
+
     # IsHTTPS mismatch with URL
     https_mismatch_indices = processed_data[
         (processed_data['URL'].str.startswith('https') & (processed_data['IsHTTPS'] == 0)) |
@@ -66,18 +67,23 @@ def clean_data(raw_data: pd.DataFrame) -> pd.DataFrame:
         'URLCharProb', 'ObfuscationRatio', 'LetterRatioInURL', 
         'DegitRatioInURL', 'SpacialCharRatioInURL'
     ]
+
+    # Since URLSimilarityIndex goes from 0 to 100, we normalize it first
+    processed_data['URLSimilarityIndex'] /= 100.0
+
     for col in ratio_columns:
         processed_data = processed_data[
-            (processed_data[col] >= 0) & (processed_data[col] <= 1)
+            (processed_data[col] >= 0.0) & (processed_data[col] <= 1.0)
         ]
 
     output_path = 'data/processed/processed_dataset.parquet'
-    processed_data.to_parquet(output_path, index = False)
+
 
     try:
+        processed_data.to_parquet(output_path, index=False)
         pd.read_parquet(output_path)
     except Exception as e:
         raise IOError("Error al desar el fitxer Parquet: " + str(e))
     
     print("Dades netejades desades a:", output_path)
-    return 0
+    return processed_data
