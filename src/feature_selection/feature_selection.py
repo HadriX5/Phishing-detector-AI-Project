@@ -7,7 +7,7 @@ from sklearn.inspection import permutation_importance
 import matplotlib.pyplot as plt
 import pyarrow.parquet as pq
 
-def select_features(df: pd.DataFrame):
+def select_features(numeric_df: pd.DataFrame, og_df: pd.DataFrame):
     """
     Realitza la selecció de característiques utilitzant un classificador Random Forest
     i la importància per permutació. Desa les característiques més importants en un fitxer
@@ -17,11 +17,9 @@ def select_features(df: pd.DataFrame):
     # Drop columns that are essentially cheats
     blacklist = ['label', 'URLSimilarityIndex'] 
     
-    feature_cols = [c for c in df.columns if c not in blacklist]
-    X = df[feature_cols]
-    y = df['label']
-
-    feature_names = X.columns
+    feature_cols = [c for c in numeric_df.columns if c not in blacklist]
+    X = numeric_df[feature_cols]
+    y = numeric_df['label']
 
     # -- TRAINING RANDOM_FOREST_CLASSIFIER --
 
@@ -80,16 +78,25 @@ def select_features(df: pd.DataFrame):
     plt.show()
 
     cols_to_keep = list(top_20_names) + ['label']
-    df_filtered = df[cols_to_keep].copy()
+    df_filtered = numeric_df[cols_to_keep].copy()
 
-    os.makedirs('data/features', exist_ok=True)
+    # Get the non-numeric columns from the original df
+    non_numeric_df = og_df.select_dtypes(exclude=[np.number])
 
+    # Concatenate the filtered numeric df with the non-numeric columns
+    df_final = pd.concat([df_filtered, non_numeric_df], axis=1)
+
+    # Ensure the output directory exists
+    os.makedirs('data/features', exist_ok = True)
+
+    # Save the filtered DataFrame to a Parquet file
     output_path = 'data/features/selected_features_df.parquet'
-    df_filtered.to_parquet(output_path, index=False)
+    df_final.to_parquet(output_path, index=False)
     
     print(f"DataFrame filtrat guardat a: {output_path}")
+    print(f"Dimensions finals: {df_final.shape}")
 
-    return df_filtered
+    return df_final
 
 def filter_correlated_features():
     # Pearson correlation to be implemented
@@ -121,4 +128,4 @@ def filter_correlated_features():
     # Drop the correlated features
     reduced_df = numeric_df.drop(columns = to_drop)
     print(reduced_df)
-    return reduced_df
+    return reduced_df, df
