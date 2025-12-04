@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
@@ -55,9 +56,10 @@ def select_features(df: pd.DataFrame):
 
     # Aisle the top 20 for visualization
     top_20_idx = sorted_indexes[-20:]
+    top_20_names = X.columns[top_20_idx]
+    print(f"Top 20 features selected: {list(top_20_names)}")
 
     # Create the graphic
-    top_20_names = X.columns[top_20_idx]
     top_20_data = result.importances[top_20_idx]      # For Boxplot (all repeats)
     top_20_means = result.importances_mean[top_20_idx] # For Bar Chart (average)
     
@@ -77,12 +79,17 @@ def select_features(df: pd.DataFrame):
     plt.tight_layout()
     plt.show()
 
-    # Save the top 15 features to a .npy
-    top_15_idx = sorted_indexes[-15:][::-1]
-    top_15_features = feature_names[top_15_idx]
+    cols_to_keep = list(top_20_names) + ['label']
+    df_filtered = df[cols_to_keep].copy()
 
-    print(f"Top 15 features selected: {top_15_features}")
-    np.save('../data/features/features.npy', top_15_features)
+    os.makedirs('data/features', exist_ok=True)
+
+    output_path = 'data/features/selected_features_df.parquet'
+    df_filtered.to_parquet(output_path, index=False)
+    
+    print(f"DataFrame filtrat guardat a: {output_path}")
+
+    return df_filtered
 
 def filter_correlated_features():
     # Pearson correlation to be implemented
