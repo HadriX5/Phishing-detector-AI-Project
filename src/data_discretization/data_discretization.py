@@ -2,65 +2,86 @@ import pandas as pd
 import pyarrow.parquet as pq
 import os
 
-def discretize_and_save(n_bins=5):
-    """
-    Reads a Parquet file, discretizes continuous numeric variables, and saves the result.
-    
-    Args:
-        n_bins (int): Number of bins (groups) for the continuous variables.
-    """
-    input_path = 'data/features/selected_features_df.parquet'
-    output_path = 'data/discrete/discrete_df.parquet'
 
-    print(f"Reading input file: {input_path}")
-    
-    # 1. Read the data
-    try:
-        df = pq.read_table(input_path).to_pandas()
-    except FileNotFoundError:
-        print("Error: Input file not found.")
-        return
+class Discretizer:
+    def __init__(self, n_bins=5):
+        self.n_bins = n_bins
+        self.bins = {} 
+        self.drop_cols = ['label', 'URL', 'Domain', 'TLD', 'Title'] 
 
-    # 2. Identify columns to process, gets only numeric columns
-    numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
-    
-    # Columns we do NOT want to touch (strings and the target 'label')
-    # Even though 'label' is numeric, it is not a feature to discretize; it is the target.
-    excluded_cols = ['label'] 
-    
-    for col in numeric_cols:
-        if col in excluded_cols:
-            continue
-            
-        # If the column only has 0s and 1s (or only one unique value), we don't discretize it.
-        unique_vals = df[col].dropna().unique()
-        is_binary = all(val in [0, 1] for val in unique_vals)
+    def fit_transform(self):
+        """
+        Computes the bin boundaries (fit) and discretizes the training data.
+        """
+        input_path = 'data/features/selected_features_df.parquet'
+        output_path = 'data/discrete/discrete_df.parquet'
+
+        print(f"Starting discretization (n_bins={self.n_bins})")
         
-        if is_binary:
-            print(f"Skipping binary: {col}")
-            continue
+        if not os.path.exists(input_path):
+            raise FileNotFoundError(f"File not found: {input_path}")
             
-        # If it has too few unique values (fewer than the bins), don't force qcut
-        if len(unique_vals) < n_bins:
-             print(f"Skipping low variance: {col} (has {len(unique_vals)} unique values)")
-             continue
+        df = pq.read_table(input_path).to_pandas()
+        
+        # Select relevant numeric columns
+        numeric_cols = [c for c in df.select_dtypes(include=['number']).columns 
+                        if c not in self.drop_cols]
 
-        # 3. Discretization (Q-cut)
-        # We use qcut (quantile cut) to try to get roughly the same number of samples in each bin.
-        try:
-            # labels=False returns 0, 1, 2... instead of ranges like "(0.5, 0.9]"
-            # duplicates = 'drop' handles cases where many values repeat (e.g., many 0s)
-            df[col] = pd.qcut(df[col], q=n_bins, labels=False, duplicates='drop')
-            print(f"Discretized: {col} -> {n_bins} bins")
-        except ValueError as e:
-            print(f"Error discretizing {col}: {e}")
+        for col in numeric_cols:
+            # Check for binary columns (0/1)
+            unique_vals = df[col].dropna().unique()
+            is_binary = all(val in [0, 1] for val in unique_vals)
 
-    # 5. Ensure the data are integers (less memory usage we can remove it if needed)
-    for col in numeric_cols:
-        if col != 'label':
-             df[col] = df[col].fillna(-1).astype(int)
+            if is_binary:
+                df[col] = df[col].astype(int)
+                continue
+            
+            # If unique values are less than n_bins, skip discretization
+            if len(unique_vals) < self.n_bins:
+                df[col] = df[col].astype(int)
+                continue
 
-    # 6. Save the data
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)    
-    df.to_parquet(output_path)
-    print(f"Successfully saved to: {output_path}")
+            # Compute bins and discretize (qcut)
+            try:
+                # retbins=True returns the exact bin edges
+                discretized_series, boundaries = pd.qcut(
+                    df[col], 
+                    q=self.n_bins, 
+                    labels=False, 
+                    retbins=True, 
+                    duplicates='drop'
+                )
+                
+                # Store bin edges for later transforms
+                self.bins[col] = boundaries
+                
+                # Update the dataframe
+                df[col] = discretized_series.fillna(-1).astype(int)
+                
+            except Exception as e:
+                print(f"Warning for '{col}': {e}")
+
+        # Save discretized parquet
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        df.to_parquet(output_path)
+        print(f"Discretized data saved to: {output_path}")
+    
+    def transform(self, new_data_df):
+        """
+        Extra helper: applies the learned bin edges to new data.
+        Uses pd.cut instead of qcut, based on self.bins.
+        """
+        df_copy = new_data_df.copy()
+        
+        for col, boundaries in self.bins.items():
+            if col in df_copy.columns:
+                # Use pd.cut with the stored bin edges
+                # include_lowest=True ensures the minimum value is included
+                df_copy[col] = pd.cut(
+                    df_copy[col], 
+                    bins=boundaries, 
+                    labels=False, 
+                    include_lowest=True
+                ).fillna(-1).astype(int)
+        
+        return df_copy

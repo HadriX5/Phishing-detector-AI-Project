@@ -1,1 +1,1 @@
-from .data_discretization import discretize_and_save
+from .data_discretization import Discretizer
