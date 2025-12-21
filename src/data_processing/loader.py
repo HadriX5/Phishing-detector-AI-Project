@@ -1,6 +1,7 @@
 from ucimlrepo import fetch_ucirepo 
+import pandas as pd
 
-def load_raw_data(id: int = 967) -> tuple:
+def load_raw_data(id: int = 967) -> pd.DataFrame:
     """
     Carrega el conjunt de característiques i les etiquetes objectiu d’un conjunt
     de dades del UCI Machine Learning Repository.
@@ -9,14 +10,13 @@ def load_raw_data(id: int = 967) -> tuple:
         id (int): Identificador únic del conjunt de dades al repositori de la UCI.
 
     Retorna:
-        tuple: Un parell (característiques, objectius) on:
-            - característiques (pd.DataFrame): DataFrame que conté les característiques d'entrada del conjunt de dades.
-            - objectius (pd.DataFrame o pd.Series): Etiquetes objectiu associades al conjunt de dades.
+        pd.DataFrame: Un DataFrame que conté tant les característiques com les 
+                      etiquetes objectiu del conjunt de dades.
     """
 
-    data = fetch_ucirepo(id = id) 
-    raw_data = data.data.features 
-    y = data.data.targets
-    return raw_data, y
+    # Fetch the data from the repository
+    data = fetch_ucirepo(id = id)
 
-    # MIRAR SI TARGETS ÉS DATAFRAME O SERIES (es <class 'pandas.core.frame.DataFrame'>)
+    # Complete the dataset for cleaning
+    raw_data = pd.concat([data.data.features, data.data.targets], axis = 1)
+    return raw_data
