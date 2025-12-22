@@ -112,11 +112,12 @@ class QLearningAgent:
         self.q_table[(state_key, action)] = new_q
 
     def save_agent(self, filepath):
+        """Guarda la instància sencera de l'agent (incloent Q-Table i KNN)."""
         with open(filepath, 'wb') as f:
-            pickle.dump({'q_table': self.q_table, 'knn_fallback': self.knn_fallback}, f)
+            pickle.dump(self, f)
 
-    def load_agent(self, filepath):
+    @staticmethod
+    def load(filepath):
+        """Mètode estàtic per carregar un agent des del disc."""
         with open(filepath, 'rb') as f:
-            data = pickle.load(f)
-            self.q_table = data['q_table']
-            self.knn_fallback = data['knn_fallback']
+            return pickle.load(f)
