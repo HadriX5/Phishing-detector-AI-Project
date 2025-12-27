@@ -4,16 +4,20 @@
 # This module implements the training loop for the Q-learning agent 
 # with KNN fallback described in q_agent.py.
 # --------------------------------------------------------------------------------------------------
+import sys
 
 import pandas as pd
 import numpy as np
 import os
 import pickle
 
+from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from src import QLearningAgent, PhishingEnv, Discretizer
-
+current_dir = os.path.dirname(os.path.abspath(__file__)) # On soc? (scripts)
+parent_dir = os.path.dirname(current_dir)              # El pare (Phishing-Project)
+sys.path.append(parent_dir)
 # -- CONFIGURATION PARAMETERS ----------------------------------------------------------------------
 DATA_PATH = "data/features/selected_features_df.parquet" 
 MODEL_PATH = "data/objects/q_agent_knn.pkl"
@@ -68,7 +72,8 @@ def main():
         epsilon_decay = EPSILON_DECAY,
         min_epsilon = MIN_EPSILON,
         knn_neighbors = KNN_NEIGHBORS)
-    
+
+    episode_rewards = [] #plot purpose
     for episode in range(EPISODES):
         state = env.reset()
         done = False
@@ -83,8 +88,21 @@ def main():
             state = next_state
             total_reward += reward
 
+        episode_rewards.append(total_reward)  #plot purpose
+        print(f"Episode {episode + 1}/{EPISODES}, Total Reward: {total_reward}, Epsilon: {agent.epsilon:.3f}") #plot purpose
         agent.decay_epsilon()
-    
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(1, EPISODES + 1), episode_rewards, marker='o')
+    plt.xlabel('Episode')
+    plt.ylabel('Accumulated Reward')
+    plt.title('Evolution of Accumulated Reward per Episode')
+    plt.grid(True)
+    plt.savefig('data/plots/reward_evolution.png')  # Optional: save the plot
+    # Muestra el gráfico y espera 10 segundos
+    plt.pause(10)
+
+    # Cierra la ventana
+    plt.close()
     # Train KNN on all known state-action pairs
     agent.train_knn(X_train.values, y_train)
 
