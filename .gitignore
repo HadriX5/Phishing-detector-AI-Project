@@ -208,3 +208,6 @@ __marimo__/
 
 # Vsual Studio Code settings
 .vscode/settings.json
+
+# Idea
+.idea/

@@ -17,24 +17,24 @@ def ammend_columns(df: pd.DataFrame) -> pd.DataFrame:
     df['DomainLength'] = df['Domain'].str.len()
 
     # --- COUNTS ---
-    # Comptar lletres
+    # Count letters
     df['NoOfLettersInURL'] = df['URL'].str.count(r'[a-zA-Z]')
 
-    # Comptar dígits (respectant el nom original amb typo 'Degits')
+    # Count digits (respecting the original typo 'Degits')
     df['NoOfDegitsInURL'] = df['URL'].str.count(r'[0-9]')
     
-    # Comptar símbols específics
+    # Count specific symbols
     df['NoOfEqualsInURL'] = df['URL'].str.count('=')
     df['NoOfQMarkInURL'] = df['URL'].str.count(r'\?')
     df['NoOfAmpersandInURL'] = df['URL'].str.count('&')
     
-    # Altres caràcters especials (ni lletra ni número)
+    # Other special characters (neither letter nor number)
     df['NoOfOtherSpecialCharsInURL'] = df['URLLength'] - (df['NoOfLettersInURL'] + 
                                                           df['NoOfDegitsInURL'])
 
     # --- RATIOS ---
 
-    safe_den = df['URLLength'].replace(0, np.nan)  # Evitar divisió per zero
+    safe_den = df['URLLength'].replace(0, np.nan)  # Avoid division by zero
 
     df['LetterRatioInURL'] = df['NoOfLettersInURL'] / safe_den
     df['DegitRatioInURL'] = df['NoOfDegitsInURL'] / safe_den

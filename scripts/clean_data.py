@@ -2,11 +2,12 @@ from src import load_raw_data, clean_data, repair_encoding, ammend_columns
 
 def main():
     """
-    Punt d'entrada principal per a la neteja i preparació del conjunt de dades.
-    Carrega les dades en brut, les repara, les neteja i les desa com a fitxer .parquet processat.
-    """
+    Main entry point for cleaning and preparing the dataset.
+    Loads the raw data, repairs it, cleans it, and saves it as a processed .parquet file.
 
-    # -- Load raw data --
+    Returns:
+        None
+    """
     raw_data = load_raw_data(967)
     
     # -- Repair encoding issues --
@@ -15,13 +16,12 @@ def main():
     # Identify the columns which have str's
     string_columns = repaired_data.select_dtypes(include=['object']).columns
 
+    # Apply encoding repair from src module
     for col in string_columns:
         repaired_data[col] = repaired_data[col].apply(repair_encoding)
 
-    # -- Ammend columns --
     ammended_data = ammend_columns(repaired_data)
 
-    # -- Clean data --
     try:
         clean_data(ammended_data)
     except IOError as e:

@@ -10,8 +10,13 @@ class Discretizer:
 
     def fit(self, df):
         """
-        Aprèn els bins basant-se només en el DataFrame passat (hauria de ser X_train).
-        NO modifica el df, només guarda els llindars a self.bins.
+        Learn the bins based only on the passed DataFrame (should be X_train).
+        Does NOT modify the df, only saves the thresholds to self.bins.
+
+        Args:
+            df (pd.DataFrame): Training DataFrame with features.
+        Returns:
+            None
         """
         print(f"Fitting Discretizer (n_bins={self.n_bins})...")
         
@@ -45,7 +50,12 @@ class Discretizer:
 
     def transform(self, df):
         """
-        Aplica els bins apresos a un DataFrame (Train o Test).
+        Apply the learned bins to discretize the DataFrame.
+        
+        Args:
+            df (pd.DataFrame): DataFrame to discretize.
+        Returns:
+            pd.DataFrame: Discretized DataFrame.
         """
         df_copy = df.copy()
         

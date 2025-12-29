@@ -17,10 +17,25 @@ class PhishingEnv:
         self.n_features = X.shape[1]
     
     def reset(self):
+        """
+        Resets the environment to the initial state and returns the first observation.
+
+        Returns:
+            np.ndarray: The first observation (features of the first website).
+        """
         self.current_index = 0
         return self.X.iloc[self.current_index].values
     
     def step(self, action):
+        """
+        Takes an action (0 for legitimate, 1 for phishing) and returns the next state,
+        reward, and done flag.
+        
+        Args:
+            action (int): The action taken by the agent (0 or 1).
+        Returns:
+            tuple: A tuple containing the next state (np.ndarray), reward (int), and done (bool).
+        """
         label = self.y.iloc[self.current_index]
         reward = 1 if action == label else -1
         

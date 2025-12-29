@@ -3,15 +3,11 @@ import pandas as pd
 
 def load_raw_data(id: int = 967) -> pd.DataFrame:
     """
-    Carrega el conjunt de característiques i les etiquetes objectiu d’un conjunt
-    de dades del UCI Machine Learning Repository.
-
-    Paràmetres:
-        id (int): Identificador únic del conjunt de dades al repositori de la UCI.
-
-    Retorna:
-        pd.DataFrame: Un DataFrame que conté tant les característiques com les 
-                      etiquetes objectiu del conjunt de dades.
+    Loads the feature set and target labels from a dataset in the UCI Machine Learning Repository.
+    Parameters:
+        id (int): Unique identifier of the dataset in the UCI repository.
+    Returns:
+        pd.DataFrame: A DataFrame containing both the features and target labels of the dataset.
     """
 
     # Fetch the data from the repository

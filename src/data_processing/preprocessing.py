@@ -2,17 +2,14 @@ import pandas as pd
 
 def clean_data(raw_data: pd.DataFrame) -> pd.DataFrame:
     """
-    Neteja i prepara el conjunt de dades per a un processament posterior o per a l’entrenament d’un model.
-
-    Paràmetres:
-        raw_data (pd.DataFrame): Les dades de característiques en brut obtingudes del conjunt de dades.
-        y (pd.DataFrame o pd.Series): Les etiquetes objectiu corresponents.
-
-    Retorna:
-        pd.DataFrame: El conjunt de dades netejat amb les files duplicades i amb valors
-                      mancants eliminades, i amb les etiquetes objectiu afegides com
-                      una nova columna 'label'. El conjunt de dades netejat també es
-                      desa com a fitxer CSV.
+    Cleans and prepares the dataset for further processing or model training.
+    Parameters:
+        raw_data (pd.DataFrame): The raw feature data obtained from the dataset.
+        y (pd.DataFrame or pd.Series): The corresponding target labels.
+    Returns:
+        pd.DataFrame: The cleaned dataset with duplicate rows and missing values
+                      removed, and with the target labels added as a new 'label'
+                      column. The cleaned dataset is also saved as a CSV file.
     """
 
 

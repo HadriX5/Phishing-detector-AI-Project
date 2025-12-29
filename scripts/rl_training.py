@@ -12,18 +12,24 @@ import os
 import pickle
 
 from matplotlib import pyplot as plt
+
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
 from src import QLearningAgent, PhishingEnv, Discretizer
-current_dir = os.path.dirname(os.path.abspath(__file__)) # On soc? (scripts)
-parent_dir = os.path.dirname(current_dir)              # El pare (Phishing-Project)
+
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
+
+
 # -- CONFIGURATION PARAMETERS ----------------------------------------------------------------------
 DATA_PATH = "data/features/selected_features_df.parquet" 
 MODEL_PATH = "data/objects/q_agent_knn.pkl"
 DISC_PATH = "data/objects/discretizer.pkl"
 
-EPISODES = 5
+EPISODES = 5 # 1000 episodes = 16h of training on a standard PC, do tests with 5 or 10 first
 TEST_SIZE = 0.2
 RANDOM_STATE = 42
 N_BINS = 5
@@ -51,14 +57,14 @@ def main():
         X, y, test_size = TEST_SIZE, random_state = RANDOM_STATE, stratify = y
     )
 
-    discretizer = Discretizer(n_bins=N_BINS)
+    discretizer = Discretizer(n_bins = N_BINS)
     
-    discretizer.fit(X_train_raw) # Aprèn els bins de Train
+    discretizer.fit(X_train_raw)
     
-    X_train = discretizer.transform(X_train_raw) # Transforma Train
-    X_test = discretizer.transform(X_test_raw)   # Transforma Test (amb bins de Train)
+    X_train = discretizer.transform(X_train_raw)
+    X_test = discretizer.transform(X_test_raw)
 
-
+    # Save the discretizer
     with open(DISC_PATH, 'wb') as f:
         pickle.dump(discretizer, f)
 
@@ -73,7 +79,7 @@ def main():
         min_epsilon = MIN_EPSILON,
         knn_neighbors = KNN_NEIGHBORS)
 
-    episode_rewards = [] #plot purpose
+    episode_rewards = [] # For final plot of reward evolution over episodes
     for episode in range(EPISODES):
         state = env.reset()
         done = False
@@ -88,21 +94,24 @@ def main():
             state = next_state
             total_reward += reward
 
-        episode_rewards.append(total_reward)  #plot purpose
-        print(f"Episode {episode + 1}/{EPISODES}, Total Reward: {total_reward}, Epsilon: {agent.epsilon:.3f}") #plot purpose
+        episode_rewards.append(total_reward)
+        print(f"Episode {episode + 1}/{EPISODES}, Total Reward: {total_reward}, \
+              Epsilon: {agent.epsilon:.3f}")
+
         agent.decay_epsilon()
-    plt.figure(figsize=(10, 6))
-    plt.plot(range(1, EPISODES + 1), episode_rewards, marker='o')
+
+    plt.figure(figsize = (10, 6))
+    plt.plot(range(1, EPISODES + 1), episode_rewards, marker = 'o')
+
     plt.xlabel('Episode')
     plt.ylabel('Accumulated Reward')
     plt.title('Evolution of Accumulated Reward per Episode')
     plt.grid(True)
-    plt.savefig('data/plots/reward_evolution.png')  # Optional: save the plot
-    # Muestra el gráfico y espera 10 segundos
-    plt.pause(10)
 
-    # Cierra la ventana
+    plt.savefig('data/plots/reward_evolution.png')
+    plt.pause(10)
     plt.close()
+    
     # Train KNN on all known state-action pairs
     agent.train_knn(X_train.values, y_train)
 

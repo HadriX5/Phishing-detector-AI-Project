@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------------------------------
+# create_dummy_data.py
+# --------------------------------------------------------------------------------------------------
+# This module generates a large dummy dataset for phishing website detection intented for early
+# testing and prototyping of machine learning models.
+# --------------------------------------------------------------------------------------------------
+
 import pandas as pd
 import numpy as np
 import os

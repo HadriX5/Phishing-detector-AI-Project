@@ -9,9 +9,14 @@ import pyarrow.parquet as pq
 
 def select_features(numeric_df: pd.DataFrame, og_df: pd.DataFrame):
     """
-    Realitza la selecció de característiques utilitzant un classificador Random Forest
-    i la importància per permutació. Desa les característiques més importants en un fitxer
-    i mostra un gràfic de les importàncies.
+    ENG:
+    Performs feature selection using a Random Forest classifier and permutation importance.
+    Saves the most important features to a file and displays a plot of the importances.
+    Args:
+        numeric_df (pd.DataFrame): DataFrame containing only numeric features.
+        og_df (pd.DataFrame): Original DataFrame with all features.
+    Returns:
+        pd.DataFrame: DataFrame with selected numeric features and non-numeric features.
     """
 
     # Drop columns that are essentially cheats

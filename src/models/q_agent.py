@@ -63,15 +63,41 @@ class QLearningAgent:
         self.knn_hits = 0
 
     def get_state_key(self, state):
+        """
+        Converts a state array into a hashable key for the Q-table.
+
+        Args:
+            state (np.ndarray): The current state.
+        Returns:
+            tuple: A hashable representation of the state.
+        """
         if state is None:
             return None
         
         return tuple(state.astype(int))
     
     def train_knn(self, X_train, y_train):
+        """
+        Trains the KNN classifier on the provided training data.
+        Args:
+            X_train (np.ndarray or pd.DataFrame): Training features.
+            y_train (np.ndarray or pd.Series): Training labels.
+        Returns:
+            None
+        """
+
         self.knn_fallback.fit(X_train, y_train)
     
     def choose_action(self, state, is_test = False):
+        """
+        Chooses an action based on the current state using an epsilon-greedy strategy.
+        Args:
+            state (np.ndarray): The current state.
+            is_test (bool): Flag indicating if the agent is in test mode.
+        Returns:
+            int: The chosen action.
+        """
+
         state_key = self.get_state_key(state)
 
         # If state not in Q-table, this is False, so we can use KNN
@@ -98,9 +124,24 @@ class QLearningAgent:
         return int(np.argmax(q_values))
     
     def decay_epsilon(self):
+        """
+        Decays the exploration rate epsilon towards min_epsilon.
+        """
+
         self.epsilon = max(self.min_epsilon, self.epsilon * self.epsilon_decay)
 
     def learn(self, state, action, reward, next_state):
+        """
+        Updates the Q-table based on the agent's experience using the Bellman equation.
+        Args:
+            state (np.ndarray): The current state.
+            action (int): The action taken.
+            reward (float): The reward received.
+            next_state (np.ndarray): The next state after taking the action.
+        Returns:
+            None
+        """
+
         state_key = self.get_state_key(state)
         next_state_key = self.get_state_key(next_state)
 
@@ -112,12 +153,26 @@ class QLearningAgent:
         self.q_table[(state_key, action)] = new_q
 
     def save_agent(self, filepath):
-        """Guarda la instància sencera de l'agent (incloent Q-Table i KNN)."""
+        """
+        Saves the entire agent instance (including Q-Table and KNN).
+        
+        Args:
+            filepath (str): Path to the file where the agent will be saved.
+        Returns:
+            None
+        """
         with open(filepath, 'wb') as f:
             pickle.dump(self, f)
 
     @staticmethod
     def load(filepath):
-        """Mètode estàtic per carregar un agent des del disc."""
+        """
+        Loads the entire agent instance (including Q-Table and KNN).
+        
+        Args:
+            filepath (str): Path to the file from which the agent will be loaded.
+        Returns:
+            QLearningAgent: The loaded agent instance.
+        """
         with open(filepath, 'rb') as f:
             return pickle.load(f)
