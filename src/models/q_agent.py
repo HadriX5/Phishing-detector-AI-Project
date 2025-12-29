@@ -151,6 +151,8 @@ class QLearningAgent:
         # Bellman Equation
         new_q = current_q + self.learning_rate * (reward + self.gamma * max_future_q - current_q)
         self.q_table[(state_key, action)] = new_q
+        
+        return abs(new_q - current_q) # Return TD error for monitoring
 
     def save_agent(self, filepath):
         """

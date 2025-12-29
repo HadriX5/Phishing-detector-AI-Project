@@ -29,7 +29,7 @@ DATA_PATH = "data/features/selected_features_df.parquet"
 MODEL_PATH = "data/objects/q_agent_knn.pkl"
 DISC_PATH = "data/objects/discretizer.pkl"
 
-EPISODES = 5 # 1000 episodes = 16h of training on a standard PC, do tests with 5 or 10 first
+EPISODES = 600 # 1000 episodes = 16h of training on a standard PC, do tests with 5,10 or 50 first
 TEST_SIZE = 0.2
 RANDOM_STATE = 42
 N_BINS = 5
@@ -37,8 +37,8 @@ N_BINS = 5
 ALPHA = 0.1
 GAMMA = 0.9
 EPSILON = 1.0
-EPSILON_DECAY = 0.90
-MIN_EPSILON = 0.01
+EPSILON_DECAY = 0.99
+MIN_EPSILON = 0.1
 KNN_NEIGHBORS = 5
 # --------------------------------------------------------------------------------------------------
 
@@ -79,37 +79,57 @@ def main():
         min_epsilon = MIN_EPSILON,
         knn_neighbors = KNN_NEIGHBORS)
 
-    episode_rewards = [] # For final plot of reward evolution over episodes
+    # For debug purposes
+    episode_rewards = []
+    episode_deltas = []
+
     for episode in range(EPISODES):
         state = env.reset()
         done = False
         total_reward = 0
 
+        total_episode_delta = 0
+        steps_in_episode = 0
+
         while not done:
             action = agent.choose_action(state, is_test = False)
             next_state, reward, done = env.step(action)
 
-            agent.learn(state, action, reward, next_state)
+            delta = agent.learn(state, action, reward, next_state)
+            total_episode_delta += delta
+            steps_in_episode += 1
 
             state = next_state
             total_reward += reward
 
         episode_rewards.append(total_reward)
-        print(f"Episode {episode + 1}/{EPISODES}, Total Reward: {total_reward}, \
-              Epsilon: {agent.epsilon:.3f}")
+
+        avg_delta = total_episode_delta / max(1, steps_in_episode)
+        episode_deltas.append(avg_delta)
+        
+        print(f"Ep {episode + 1}/{EPISODES} | Reward: {total_reward} | Avg Delta: {avg_delta:.4f} | Epsilon: {agent.epsilon:.3f}")
 
         agent.decay_epsilon()
 
-    plt.figure(figsize = (10, 6))
-    plt.plot(range(1, EPISODES + 1), episode_rewards, marker = 'o')
+    plt.figure(figsize=(10, 6))
+    
+    # Dades reals
+    plt.plot(range(1, EPISODES + 1), episode_deltas, color = 'red', alpha=0.4, label='Delta Q (Raw)')
+    
+    # Suavitzat (per veure millor la tendència)
+    if len(episode_deltas) > 20:
+        deltas_smooth = pd.Series(episode_deltas).rolling(window=20).mean()
+        plt.plot(range(1, EPISODES + 1), deltas_smooth, color='darkred', linewidth=2, 
+                 label = 'Delta Q (Smoothed)')
 
-    plt.xlabel('Episode')
-    plt.ylabel('Accumulated Reward')
-    plt.title('Evolution of Accumulated Reward per Episode')
+    plt.xlabel('Episodi')
+    plt.ylabel('Average Absolute TD-Error')
+    plt.title('Convergència Matemàtica (Q-Value Stability)')
+    plt.legend()
     plt.grid(True)
-
-    plt.savefig('data/plots/reward_evolution.png')
-    plt.pause(10)
+    plt.yscale('log')
+    
+    plt.savefig('data/others/convergence_delta.png')
     plt.close()
     
     # Train KNN on all known state-action pairs
