@@ -103,19 +103,20 @@ The model uses 20 high-impact features extracted from the URL and HTML content. 
 ```Plaintext
 phishing-detector-rl/
 ├── data/
-│   ├── features/          # Raw parquet datasets
-│   └── objects/           # Saved models (.pkl)
-├── notebooks/             # Jupyter notebooks for EDA
+│   ├── discrete/                # Discretized dataset
+│   ├── objects/                 # Saved models (.pkl)
+│   └── raw/                     # Raw dataset form source
 ├── scripts/
-│   ├── train_rl.py        # Main training loop
-│   └── predict_url.py     # Inference script
+│   ├── train_rl.py              # Main training loop
+│   ├── functional_predictor.py  # Inference script from GUI
+│   └── predict_url.py           # Inference script from code
 ├── src/
 │   ├── models/
-│   │   └── q_agent.py     # QLearningAgent Class with KNN logic
+│   │   └── q_agent.py           # QLearningAgent Class with KNN logic
 │   ├── utils/
-│   │   └── discretizer.py # Discretization logic (Fit/Transform)
+│   │   └── discretizer.py       # Discretization logic (Fit/Transform)
 │   └── environment/
-│       └── phishing_env.py # RL Environment
+│       └── phishing_env.py      # RL Environment
 ├── requirements.txt
 └── README.md
 ```
