@@ -82,6 +82,8 @@ CHAR_FREQS = {
     'œ': 1.4756773691151646e-07, '¤': 1.4756773691151646e-07
 }
 
+CHAR_FREQS_MEAN = sum(CHAR_FREQS.values()) / len(CHAR_FREQS)
+
 # -- CARREGAR DADES AUXILIARS (TLD MAP) ------------------------------------------------------------
 
 DEFAULT_TLD_PROB = 0.261534 # Valor de fallback per si falla el JSON
@@ -141,7 +143,7 @@ def calc_url_char_prob(url):
     clean_url = url.lower().replace("https://", "").replace("http://", "")
     if not clean_url: 
         return 0
-    total_prob = sum(CHAR_FREQS.get(char, 0.001) for char in clean_url)
+    total_prob = sum(CHAR_FREQS.get(char, CHAR_FREQS_MEAN) for char in clean_url)
     return (total_prob / len(clean_url))
 
 def calc_char_continuation_rate(url):
@@ -219,7 +221,7 @@ def extreure_features(url):
         clean_dom = re.sub(r'[^a-zA-Z0-9]', '', domain_part).lower()
         clean_tit = re.sub(r'[^a-zA-Z0-9]', '', title).lower()
         
-        features["DomainTitleMatchScore"] = calc_domain_title_match_score(domain_part, title)
+        features["DomainTitleMatchScore"] = calc_domain_title_match_score(clean_dom, clean_tit)
         features["NoOfImage"] = len(soup.find_all('img')) + len(soup.find_all('svg'))
         features["NoOfJS"] = len(soup.find_all('script'))
         features["NoOfiFrame"] = len(soup.find_all('iframe'))
